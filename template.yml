@@ -1,0 +1,79 @@
+---
+  kind: "Template"
+  apiVersion: "v1"
+  metadata:
+    name: "foaas-template"
+    annotations:
+      description: "An example Dancer application with no database"
+      tags: "quickstart,perl,dancer"
+      iconClass: "icon-perl"
+  labels:
+    template: "foaas"
+  objects:
+    -
+      kind: "Service"
+      apiVersion: "v1"
+      metadata:
+        name: "${NAME}-svc"
+        annotations:
+          description: "Exposes and load balances the application pods"
+      spec:
+        ports:
+          -
+            name: "web"
+            port: 8080
+            targetPort: 8080
+        selector:
+          name: "${NAME}"
+    -
+      kind: "Route"
+      apiVersion: "v1"
+      metadata:
+        name: "${NAME}-route"
+      spec:
+        to:
+          kind: "Service"
+          name: "${NAME}-svc"
+    -
+      kind: "DeploymentConfig"
+      apiVersion: "v1"
+      metadata:
+        name: "${NAME}-dc"
+        annotations:
+          description: "Defines how to deploy the application server"
+      spec:
+        strategy:
+          type: "Rolling"
+        triggers:
+          -
+            type: "ConfigChange"
+        replicas: 1
+        selector:
+          name: "${NAME}"
+        template:
+          metadata:
+            name: "${NAME}"
+            labels:
+              name: "${NAME}"
+          spec:
+            containers:
+              -
+                name: "test-mock"
+                image: "${DOCKER_IMAGE}"
+                ports: 8080
+                  -
+                    containerPort: 8080
+                resources:
+  parameters:
+    -
+      name: "NAME"
+      displayName: "Name"
+      description: "The name assigned to all of the frontend objects defined in this template."
+      required: true
+      value: "dancer-example"
+    -
+      name: "DOCKER_IMAGE"
+      displayName: "Docker Image"
+      description: "Please enter a name of the docker image"
+      required: true
+      value: "ishentras/httpd"
