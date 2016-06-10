@@ -4,9 +4,9 @@
   metadata:
     name: "foaas-template"
     annotations:
-      description: "An example Dancer application with no database"
-      tags: "quickstart,perl,dancer"
-      iconClass: "icon-perl"
+      description: "This will mock your application and tell you in new and fun ways to rebuild"
+      tags: "foaas,mock,container"
+      iconClass: "icon-play"
   labels:
     template: "foaas"
   objects:
@@ -60,7 +60,7 @@
               -
                 name: "test-mock"
                 image: "${DOCKER_IMAGE}"
-                ports: 8080
+                ports:
                   -
                     containerPort: 8080
                 resources:
