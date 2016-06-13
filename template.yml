@@ -35,6 +35,46 @@
           kind: "Service"
           name: "${NAME}-svc"
     -
+      kind: "ImageStream"
+      apiVersion: "v1"
+      metadata:
+        name: "${NAME}"
+        annotations:
+          description: "Keeps track of changes in the application image"
+    -
+      kind: "BuildConfig"
+      apiVersion: "v1"
+      metadata:
+        name: "${NAME}-bc"
+        annotations:
+          description: "Defines how to build the application"
+      spec:
+        source:
+          type: "Git"
+          git:
+            uri: "${SOURCE_REPOSITORY_URL}"
+            ref: "${SOURCE_REPOSITORY_REF}"
+          contextDir: "${CONTEXT_DIR}"
+        strategy:
+          type: "Source"
+          env:
+            -
+              name: "DEV_NAME"
+              value: "${DEV_NAME}"
+          sourceStrategy:
+            from:
+              kind: "ImageStreamTag"
+              name: "foaas-builder:latest"
+        output:
+          to:
+            kind: "ImageStreamTag"
+            name: "${NAME}:latest"
+        triggers:
+          -
+            type: "ImageChange"
+          -
+            type: "ConfigChange"
+    -
       kind: "DeploymentConfig"
       apiVersion: "v1"
       metadata:
@@ -45,6 +85,16 @@
         strategy:
           type: "Rolling"
         triggers:
+          -
+            type: "ImageChange"
+            imageChangeParams:
+              automatic: true
+              containerNames:
+                - "foaas-provisioning-test"
+              from:
+                kind: "ImageStreamTag"
+                namespace: "foaas-team-hack"
+                name: "${NAME}:latest"
           -
             type: "ConfigChange"
         replicas: 1
@@ -58,11 +108,15 @@
           spec:
             containers:
               -
-                name: "test-mock"
-                image: "${DOCKER_IMAGE}"
+                name: "foaas-provisioning-test"
+                image: " "
                 ports:
                   -
                     containerPort: 8080
+                env:
+                  -
+                    name: "DEV_NAME"
+                    value: "${DEV_NAME}"
                 resources:
   parameters:
     -
@@ -70,10 +124,24 @@
       displayName: "Name"
       description: "The name assigned to all of the frontend objects defined in this template."
       required: true
-      value: "dancer-example"
+      value: "foaas"
     -
-      name: "DOCKER_IMAGE"
-      displayName: "Docker Image"
-      description: "Please enter a name of the docker image"
+      name: "DEV_NAME"
+      displayName: "Developer Name"
+      description: "The name of the person developing this code"
       required: true
-      value: "ishentras/httpd"
+      value: "Matt Roberts"
+    -
+      name: "SOURCE_REPOSITORY_URL"
+      displayName: "Git Repository URL"
+      description: "The URL of the repository with your application source code."
+      required: true
+      value: "Your Git repository URL goes here"
+    -
+      name: "SOURCE_REPOSITORY_REF"
+      displayName: "Git Reference"
+      description: "Set this to a branch name, tag or other ref of your repository if you are not using the default branch."
+    -
+      name: "CONTEXT_DIR"
+      displayName: "Context Directory"
+      description: "Set this to the relative path to your project if it is not in the root of your repository."

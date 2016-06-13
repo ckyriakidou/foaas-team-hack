@@ -1,0 +1,10 @@
+---
+  kind: "ImageStream"
+  apiVersion: "v1"
+  metadata: 
+    name: "foaas-builder"
+    labels: 
+      template: "foaas"
+  spec: 
+    dockerImageRepository: "docker.io/ishentras/foaas-builder"
+  status: {}
