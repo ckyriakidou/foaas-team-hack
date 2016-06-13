@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# S2I assemble script for the 'foaas-builder' image.
+# The 'assemble' script builds your application source so that it is ready to run.
+#
+# For more information refer to the documentation:
+#	https://github.com/openshift/source-to-image/blob/master/docs/builder_image.md
+#
+if [[ "$1" == "-h" ]]; then
+	# If the 'foaas-builder' assemble script is executed with '-h' flag,
+	# print the usage.
+	exec /usr/local/s2i/usage
+fi
+
+# Restore artifacts from the previous build (if they exist).
+#
+if [ "$(ls /tmp/artifacts/ 2>/dev/null)" ]; then
+  echo "---> Restoring build artifacts..."
+  mv /tmp/artifacts/. ./
+fi
+
+TEAM="FOAAS Hack Team"
+
+echo "---> Installing application source..."
+cp -Rf /tmp/src/* /opt/app-root/src/
+
+echo "---> Building application from source..."
+# TODO: Add build steps for your application, eg npm install, bundle install
+mkdir /opt/app-root/deployment
+URL=""
+pep8 /opt/app-root/src/
+if [ $? -eq 0 ]
+then 
+  URL=http://foaas.com/cool/${TEAM}
+cat >/usr/share/nginx/html/index.html<<EOF
+<html>
+    <head>
+        <meta http-equiv="refresh" content="10;url=${URL}" />
+    </head>
+    <body>
+        <h1>Redirecting soon: You might be alrigh</h1>
+    </body>
+</html>
+EOF
+
+else
+  URL=http://foaas.com/yoda/${DEV_NAME}/${TEAM}
+  LINT_OUT=$(pep8 /opt/app-root/src/)
+  cat >/usr/share/nginx/html/index.html<<EOF
+<html>
+    <head>
+        <meta http-equiv="refresh" content="10;url=${URL}" />
+    </head>
+    <body>
+        <h1>Redirecting soon: These are all the reasons you 're wrong</h1>
+        <p>${LINT_OUT}</p>
+    </body>
+</html>
+EOF
+
+fi
+
+exit 0
